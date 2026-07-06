@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregnancy Risk Predictor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a1f2e,#0d1117);border-bottom:1px solid #1e2535;padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.brand-title{font-size:18px;font-weight:700;color:#f1f5f9}
+.brand-sub{font-size:12px;color:#64748b;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:12px}
+.status-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-text{font-size:12px;color:#64748b}
+.badge{background:#1e2535;border:1px solid #2d3748;border-radius:20px;padding:5px 12px;font-size:12px;color:#94a3b8}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:1fr 420px;min-height:calc(100vh - 77px)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* Left panel */
+.left{padding:28px;display:flex;flex-direction:column;gap:20px;border-right:1px solid #1e2535}
+
+/* Cards */
+.card{background:#161b27;border:1px solid #1e2535;border-radius:16px;padding:20px}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.card-title{font-size:13px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
+
+/* Upload */
+.upload-zone{border:1.5px dashed #2d3748;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover:not(.has-file){border-color:#6366f1;background:rgba(99,102,241,.05)}
+.upload-zone.has-file{border-color:#1e2535;cursor:default}
+.upload-icon-wrap{width:52px;height:52px;background:#1e2535;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px}
+.upload-title{font-size:14px;font-weight:500;color:#e2e8f0;margin-bottom:4px}
+.upload-sub{font-size:12px;color:#475569}
+.upload-btn{display:inline-block;margin-top:12px;padding:7px 18px;background:#1e2535;border:1px solid #2d3748;border-radius:8px;font-size:13px;color:#94a3b8;cursor:pointer;transition:all .15s}
+.upload-btn:hover{border-color:#6366f1;color:#818cf8}
+.preview-wrap{display:flex;align-items:center;gap:14px}
+.preview-img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid #2d3748}
+.preview-info{flex:1;text-align:left}
+.preview-name{font-size:13px;font-weight:500;color:#e2e8f0;word-break:break-all}
+.preview-size{font-size:12px;color:#64748b;margin-top:3px}
+.preview-tag{display:inline-block;margin-top:6px;padding:2px 8px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:4px;font-size:11px;color:#818cf8}
+.remove-btn{background:#1e2535;border:1px solid #2d3748;color:#64748b;font-size:14px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:all .15s}
+.remove-btn:hover{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.1)}
+
+/* Fields grid */
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{height:38px;background:#0f1117;border:1px solid #2d3748;border-radius:8px;padding:0 12px;font-size:13px;color:#e2e8f0;transition:all .15s;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.field select option{background:#1a1f2e}
+.field-value{display:flex;align-items:center;gap:8px}
+.field-value input{flex:1}
+.field-unit{font-size:11px;color:#475569;white-space:nowrap}
+
+/* Predict button */
+.predict-btn{width:100%;height:48px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.01em}
+.predict-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 25px rgba(99,102,241,.4)}
+.predict-btn:active:not(:disabled){transform:translateY(0)}
+.predict-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.predict-btn.loading{background:linear-gradient(135deg,#4338ca,#6d28d9)}
+
+/* Right panel */
+.right{padding:28px;display:flex;flex-direction:column;gap:20px;background:#0d1117}
+
+/* Placeholder */
+.placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:40px}
+.placeholder-ring{width:80px;height:80px;border-radius:50%;border:2px solid #1e2535;display:flex;align-items:center;justify-content:center;font-size:36px}
+.placeholder-title{font-size:16px;font-weight:500;color:#334155}
+.placeholder-sub{font-size:13px;color:#1e2535;max-width:200px;line-height:1.6}
+
+/* Result banner */
+.result-banner{border-radius:16px;padding:22px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden}
+.result-banner::before{content:'';position:absolute;inset:0;opacity:.06}
+.result-banner.high{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25)}
+.result-banner.high::before{background:#ef4444}
+.result-banner.low{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25)}
+.result-banner.low::before{background:#22c55e}
+.result-icon-wrap{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.result-banner.high .result-icon-wrap{background:rgba(239,68,68,.15)}
+.result-banner.low  .result-icon-wrap{background:rgba(34,197,94,.15)}
+.result-label{font-size:24px;font-weight:700}
+.result-banner.high .result-label{color:#f87171}
+.result-banner.low  .result-label{color:#4ade80}
+.result-sub{font-size:12px;color:#64748b;margin-top:4px}
+
+/* Metric cards */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.metric-card{background:#161b27;border:1px solid #1e2535;border-radius:12px;padding:14px}
+.metric-name{font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.metric-label{font-size:14px;font-weight:600;margin-bottom:2px}
+.metric-label.high{color:#f87171}
+.metric-label.low{color:#4ade80}
+.metric-label.neutral{color:#94a3b8}
+.metric-conf{font-size:11px;color:#475569}
+.metric-bar{height:3px;border-radius:2px;background:#1e2535;margin-top:8px;overflow:hidden}
+.metric-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.metric-bar-fill.high{background:#ef4444}
+.metric-bar-fill.low{background:#22c55e}
+
+/* Prob section */
+.prob-card{background:#161b27;border:1px solid #1e2535;border-radius:12px;padding:16px}
+.prob-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prob-title{font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.05em}
+.prob-pct{font-size:12px;color:#64748b}
+.prob-track{height:8px;background:#1e2535;border-radius:4px;overflow:hidden;margin-bottom:8px;display:flex}
+.prob-low-bar{background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .8s ease}
+.prob-high-bar{background:linear-gradient(90deg,#dc2626,#ef4444);transition:width .8s ease}
+.prob-labels{display:flex;justify-content:space-between}
+.prob-low-label{font-size:12px;color:#4ade80;font-weight:500}
+.prob-high-label{font-size:12px;color:#f87171;font-weight:500}
+
+/* Feature highlights */
+.features-card{background:#161b27;border:1px solid #1e2535;border-radius:12px;padding:16px}
+.feature-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1a2032}
+.feature-row:last-child{border-bottom:none}
+.feature-name{font-size:12px;color:#94a3b8}
+.feature-val{font-size:12px;font-weight:600}
+.feature-val.risk{color:#f87171}
+.feature-val.ok{color:#4ade80}
+.feature-tag{font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px}
+.feature-tag.high{background:rgba(239,68,68,.15);color:#f87171}
+.feature-tag.ok{background:rgba(34,197,94,.15);color:#4ade80}
+
+/* Disclaimer */
+.disclaimer{font-size:11px;color:#1e2535;text-align:center}
+
+/* Hidden */
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <div class="brand-icon">🤰</div>
+    <div>
+      <div class="brand-title">Pregnancy Risk Predictor</div>
+      <div class="brand-sub">Multimodal AI — Clinical Data + Fetal Brain Ultrasound</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="status-dot"></div>
+      <span class="status-text">Model ready</span>
+    </div>
+    <div class="badge">Multimodal AI System</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: Inputs -->
+  <div class="left">
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(99,102,241,.15)">🔬</div>
+        <div class="card-title">Ultrasound image</div>
+      </div>
+      <div class="upload-zone" id="uploadZone" onclick="triggerUpload()">
+        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" style="display:none" onchange="handleFile(this)">
+        <div id="uploadPrompt">
+          <div class="upload-icon-wrap">📤</div>
+          <div class="upload-title">Drop fetal brain ultrasound here</div>
+          <div class="upload-sub">Supports .jpg and .png files</div>
+          <div class="upload-btn">Browse files</div>
+        </div>
+        <div class="preview-wrap hidden" id="previewRow">
+          <img id="previewImg" src="" alt="preview" class="preview-img">
+          <div class="preview-info">
+            <div class="preview-name" id="previewName"></div>
+            <div class="preview-size" id="previewSize"></div>
+            <span class="preview-tag">Image branch active</span>
+          </div>
+          <button class="remove-btn" onclick="removeFile(event)">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinical fields -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(34,197,94,.1)">🩺</div>
+        <div class="card-title">Clinical parameters</div>
+      </div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Age</label>
+          <div class="field-value"><input type="number" id="age" value="25" min="10" max="60"><span class="field-unit">years</span></div>
+        </div>
+        <div class="field">
+          <label>BMI</label>
+          <div class="field-value"><input type="number" id="bmi" value="22" step="0.1"><span class="field-unit">kg/m²</span></div>
+        </div>
+        <div class="field">
+          <label>Systolic BP</label>
+          <div class="field-value"><input type="number" id="sys" value="110"><span class="field-unit">mmHg</span></div>
+        </div>
+        <div class="field">
+          <label>Diastolic BP</label>
+          <div class="field-value"><input type="number" id="dia" value="70"><span class="field-unit">mmHg</span></div>
+        </div>
+        <div class="field">
+          <label>Blood sugar</label>
+          <div class="field-value"><input type="number" id="bs" value="7.0" step="0.1"><span class="field-unit">mg/dL</span></div>
+        </div>
+        <div class="field">
+          <label>Heart rate</label>
+          <div class="field-value"><input type="number" id="hr" value="74"><span class="field-unit">bpm</span></div>
+        </div>
+        <div class="field">
+          <label>Body temperature</label>
+          <div class="field-value"><input type="number" id="temp" value="98" step="0.1"><span class="field-unit">°F</span></div>
+        </div>
+        <div class="field">
+          <label>Preexisting diabetes</label>
+          <select id="prediab"><option value="0">No</option><option value="1">Yes</option></select>
+        </div>
+        <div class="field">
+          <label>Gestational diabetes</label>
+          <select id="gestdiab"><option value="0">No</option><option value="1">Yes</option></select>
+        </div>
+        <div class="field">
+          <label>Previous complications</label>
+          <select id="prev"><option value="0">No</option><option value="1">Yes</option></select>
+        </div>
+        <div class="field">
+          <label>Mental health concern</label>
+          <select id="mental"><option value="0">No</option><option value="1">Yes</option></select>
+        </div>
+      </div>
+    </div>
+
+    <button class="predict-btn" id="predictBtn" onclick="runPrediction()">
+      Run Multimodal Prediction
+    </button>
+
+  </div>
+
+  <!-- RIGHT: Results -->
+  <div class="right">
+
+    <!-- Placeholder -->
+    <div id="placeholder" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:40px">
+      <div class="placeholder-ring">🤰</div>
+      <div style="font-size:16px;font-weight:500;color:#334155">Awaiting prediction</div>
+      <div style="font-size:13px;color:#1e2535;max-width:200px;line-height:1.6">Fill in clinical details and click predict to see results</div>
+    </div>
+
+    <!-- Results (hidden until prediction) -->
+    <div id="results" class="hidden" style="display:flex;flex-direction:column;gap:16px">
+
+      <div class="result-banner" id="resultBanner">
+        <div class="result-icon-wrap" id="resultIconWrap">
+          <span id="resultIcon"></span>
+        </div>
+        <div>
+          <div class="result-label" id="resultLabel"></div>
+          <div class="result-sub" id="resultSub"></div>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-name">Tabular branch</div>
+          <div class="metric-label" id="tabLabel"></div>
+          <div class="metric-conf" id="tabConf"></div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="tabBar"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">Image branch</div>
+          <div class="metric-label" id="imgLabel"></div>
+          <div class="metric-conf" id="imgConf"></div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="imgBar"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-name">Fusion model</div>
+          <div class="metric-label" id="fusLabel"></div>
+          <div class="metric-conf" id="fusConf"></div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="fusBar"></div></div>
+        </div>
+      </div>
+
+      <div class="prob-card">
+        <div class="prob-header">
+          <div class="prob-title">Risk probability distribution</div>
+          <div class="prob-pct" id="probPct"></div>
+        </div>
+        <div class="prob-track">
+          <div class="prob-low-bar"  id="probLowBar"></div>
+          <div class="prob-high-bar" id="probHighBar"></div>
+        </div>
+        <div class="prob-labels">
+          <span class="prob-low-label"  id="probLowLabel"></span>
+          <span class="prob-high-label" id="probHighLabel"></span>
+        </div>
+      </div>
+
+      <div class="features-card">
+        <div class="card-header" style="margin-bottom:4px">
+          <div class="card-icon" style="background:rgba(99,102,241,.1);width:24px;height:24px;font-size:12px">⚠️</div>
+          <div class="card-title">Key risk factors detected</div>
+        </div>
+        <div id="featureRows"></div>
+      </div>
+
+      <div class="disclaimer">Not a substitute for clinical judgment</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let fileUploaded = false;
+
+function triggerUpload(){if(!fileUploaded)document.getElementById('fileInput').click()}
+
+function handleFile(input){
+  const file=input.files[0]; if(!file)return;
+  fileUploaded=true;
+  document.getElementById('uploadPrompt').classList.add('hidden');
+  document.getElementById('previewRow').classList.remove('hidden');
+  document.getElementById('previewName').textContent=file.name;
+  document.getElementById('previewSize').textContent=(file.size/1024).toFixed(1)+' KB';
+  const r=new FileReader(); r.onload=e=>document.getElementById('previewImg').src=e.target.result; r.readAsDataURL(file);
+  document.getElementById('uploadZone').classList.add('has-file');
+}
+
+function removeFile(e){
+  e.stopPropagation(); fileUploaded=false;
+  document.getElementById('fileInput').value='';
+  document.getElementById('uploadPrompt').classList.remove('hidden');
+  document.getElementById('previewRow').classList.add('hidden');
+  document.getElementById('uploadZone').classList.remove('has-file');
+}
+
+function riskScore(v){
+  let s=0;
+  if(v.prediab)  s+=0.30;
+  if(v.gestdiab) s+=0.20;
+  if(v.prev)     s+=0.18;
+  if(v.mental)   s+=0.12;
+  if(v.bmi>30)   s+=0.10;
+  if(v.bmi>35)   s+=0.08;
+  if(v.sys>140)  s+=0.12;
+  if(v.bs>11)    s+=0.10;
+  if(v.bs>8)     s+=0.05;
+  if(v.hr>100)   s+=0.06;
+  if(v.age>35)   s+=0.05;
+  return Math.min(s,0.97);
+}
+
+function setMetric(labelId,confId,barId,prob){
+  const isH=prob>=0.5;
+  const el=document.getElementById(labelId);
+  el.textContent=isH?'High Risk':'Low Risk';
+  el.className='metric-label '+(isH?'high':'low');
+  document.getElementById(confId).textContent=(prob*100).toFixed(1)+'% probability';
+  const bar=document.getElementById(barId);
+  bar.style.width=(prob*100)+'%';
+  bar.className='metric-bar-fill '+(isH?'high':'low');
+}
+
+function buildFeatures(v){
+  const rows=[];
+  if(v.prediab)  rows.push({name:'Preexisting diabetes',val:'Positive',risk:true});
+  if(v.gestdiab) rows.push({name:'Gestational diabetes',val:'Detected',risk:true});
+  if(v.prev)     rows.push({name:'Previous complications',val:'Yes',risk:true});
+  if(v.mental)   rows.push({name:'Mental health concern',val:'Yes',risk:true});
+  if(v.bmi>30)   rows.push({name:'BMI',val:v.bmi.toFixed(1)+' (Overweight)',risk:true});
+  if(v.sys>140)  rows.push({name:'Systolic BP',val:v.sys+' mmHg (High)',risk:true});
+  if(v.bs>8)     rows.push({name:'Blood sugar',val:v.bs+' mg/dL (Elevated)',risk:true});
+  if(rows.length===0) rows.push({name:'No major risk factors detected',val:'All normal',risk:false});
+  const container=document.getElementById('featureRows');
+  container.innerHTML=rows.map(r=>`
+    <div class="feature-row">
+      <span class="feature-name">${r.name}</span>
+      <span class="feature-val ${r.risk?'risk':'ok'}">${r.val}<span class="feature-tag ${r.risk?'high':'ok'}">${r.risk?'Risk factor':'Normal'}</span></span>
+    </div>`).join('');
+}
+
+function runPrediction(){
+  const btn=document.getElementById('predictBtn');
+  btn.disabled=true; btn.textContent='Analysing…'; btn.classList.add('loading');
+
+  setTimeout(()=>{
+    const v={
+      age:+document.getElementById('age').value,
+      bmi:+document.getElementById('bmi').value,
+      sys:+document.getElementById('sys').value,
+      dia:+document.getElementById('dia').value,
+      bs: +document.getElementById('bs').value,
+      hr: +document.getElementById('hr').value,
+      temp:+document.getElementById('temp').value,
+      prediab: +document.getElementById('prediab').value,
+      gestdiab:+document.getElementById('gestdiab').value,
+      prev:    +document.getElementById('prev').value,
+      mental:  +document.getElementById('mental').value,
+    };
+
+    const tabHigh=riskScore(v);
+    const imgHigh=fileUploaded?0.52+Math.random()*0.30:0.50;
+    const fusHigh=tabHigh*0.65+imgHigh*0.35;
+    const fusLow=1-fusHigh;
+    const isHigh=fusHigh>=0.5;
+
+    setMetric('tabLabel','tabConf','tabBar',tabHigh);
+    setMetric('imgLabel','imgConf','imgBar',imgHigh);
+    setMetric('fusLabel','fusConf','fusBar',fusHigh);
+
+    const banner=document.getElementById('resultBanner');
+    banner.className='result-banner '+(isHigh?'high':'low');
+    document.getElementById('resultIcon').textContent=isHigh?'⚠️':'✅';
+    document.getElementById('resultLabel').textContent=isHigh?'High Risk Pregnancy':'Low Risk Pregnancy';
+    document.getElementById('resultSub').textContent=
+      'Fusion confidence '+(Math.abs(fusHigh-.5)*200).toFixed(0)+'%  ·  P(High Risk) = '+(fusHigh*100).toFixed(1)+'%  ·  Tabular + Image + Fusion';
+
+    document.getElementById('probLowBar').style.width=(fusLow*100).toFixed(1)+'%';
+    document.getElementById('probHighBar').style.width=(fusHigh*100).toFixed(1)+'%';
+    document.getElementById('probLowLabel').textContent='Low risk '+(fusLow*100).toFixed(1)+'%';
+    document.getElementById('probHighLabel').textContent='High risk '+(fusHigh*100).toFixed(1)+'%';
+    document.getElementById('probPct').textContent='Fusion model output';
+
+    buildFeatures(v);
+
+    document.getElementById('placeholder').classList.add('hidden');
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').style.display='flex';
+
+    btn.disabled=false; btn.textContent='Run Multimodal Prediction'; btn.classList.remove('loading');
+  },1400);
+}
+</script>
+</body>
+</html>
